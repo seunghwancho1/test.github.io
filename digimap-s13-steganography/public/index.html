@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+        <title>Image Steganography</title>
+    </head>
+    <body onload="hideImage()">
+        <div class="container">
+            <div style="float:left">
+            <h1>Image Steganography MP</h1>
+            Hide images inside other images.
+            </div>
+
+            <div style="float: left; margin-top: 35px">
+            <a style="margin-left: 50px" href="#" data-toggle="modal" data-target="#infomodal">How it works</a>
+            <a style="margin-left: 50px" href="/blog/stories/image-steganography.html">How to defeat it</a>
+            </div>
+
+            <div style="clear:both"></div>
+            <hr>
+
+            <p>This is a client-side Javascript tool to steganographically hide images inside the lower "bits" of other images.</p>
+            <p>Select either "Hide image" or "Unhide image". Play with the <b>example</b> images (all 200x200 px) to get a feel for it.</p>
+
+            <div class="modal" id="infomodal" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title" id="myModalLabel">How it works</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>Each channel (red, green, blue) of each pixel in an image is represented by an 8-bit value. To hide the secret image
+                            inside the cover image, we replace the <b>n</b> least significant bits of the cover pixel value with the same number of most significant
+                            bits from the secret pixel value. Example, using 3 hidden bits:</p>
+                            <p>Cover pixel: (167, 93, 27) == (<b>10100</b>111, <b>01011</b>101, <b>00011</b>011) <span style="background-color:rgb(167,93,27)">&nbsp;&nbsp;&nbsp;</span><br>
+                            Secret pixel: (67, 200, 105) == (<b>010</b>00011, <b>110</b>01000, <b>011</b>01001) <span style="background-color:rgb(67,200,105)">&nbsp;&nbsp;&nbsp;</span><br>
+                            Output pixel: (162, 94, 27) == (10100<b>010</b>, 01011<b>110</b>, 00011<b>011</b>) <span style="background-color:rgb(162,94,27)">&nbsp;&nbsp;&nbsp;</span>
+                            </p>
+                            <p>The output colour is almost indistinguishable from the cover colour, but now contains information
+                            to extract an approximation of the secret pixel value, which gets padded with 0 to fill in the missing bits, so comes out to
+                            (64, 192, 96) ==
+                            (<b>010</b>00000, <b>110</b>00000, <b>011</b>00000) <span style="background-color:rgb(64,192,96)">&nbsp;&nbsp;&nbsp;</span>.</p>
+                            <p>Using a larger number of hidden bits results in a better quality hidden image, but makes it easier to tell that the hidden
+                            image is there. Play with the 'hidden bits' slider to see.</p>
+                            <p>There is an example on Wikipedia of a cat hidden in a picture of a tree. To do the example here, use the 'Unhide image' tool
+                            to select the 'Wikipedia tree' example, and set hidden bits to 2.</p>
+                            <p>All of the computation is performed in your browser in Javascript. Be careful with larger images as it can be quite slow.</p>
+                            <p>Once you've hidden your secret image inside a cover image, send the output image to your accomplice. Your accomplice then
+                            uses the 'Unhide image' tool to recover the secret image.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row" style="padding-bottom: 20px">
+                <div class="col-md-12">
+                    <div class="btn-group">
+                        <button class="btn btn-primary" id="hide-switch">Hide image</button>
+                        <button class="btn btn-default" id="unhide-switch">Unhide image</button>
+                    </div>
+                </div>
+                <!-- add another column here with a letterbox ad -->
+            </div>
+
+            <div id="hiderow" class="row">
+                <div class="col-md-4" style="padding-bottom: 40px">
+                    <div style="height: 100px">
+                        Cover image:<input type="file" id="cover"/><br>
+                        Example:
+                        <select id="cover-preset">
+                            <option value="na">N/A</option>
+                            <option value="wikipedia-tree">Wikipedia Tree</option>
+                            <option value="wikipedia-cat">Wikipedia Cat</option>
+                            <option value="jes">jes</option>
+                            <option value="walrus">Walrus</option>
+                            <option value="lena">Lena</option>
+                            <option value="rally-car">Rally car</option>
+                            <option value="motocross">Motocross</option>
+                            <option value="pink">Pink</option>
+                        </select>
+                    </div>
+                    <canvas style="border: solid 1px black" width="300" height="300" id="covercanvas"></canvas>
+                </div>
+
+                <div class="col-md-4" style="padding-bottom: 40px">
+                    <div style="height: 100px">
+                        Secret image:<input type="file" id="secret"/><br>
+                        Example:
+                        <select id="secret-preset">
+                            <option value="na">N/A</option>
+                            <option value="wikipedia-tree">Wikipedia Tree</option>
+                            <option value="wikipedia-cat">Wikipedia Cat</option>
+                            <option value="jes">jes</option>
+                            <option value="walrus">Walrus</option>
+                            <option value="lena">Lena</option>
+                            <option value="rally-car">Rally car</option>
+                            <option value="motocross">Motocross</option>
+                            <option value="pink">Pink</option>
+                        </select>
+                    </div>
+                    <canvas style="border: solid 1px black" width="300" height="300" id="secretcanvas"></canvas>
+                </div>
+
+                <div class="col-md-4" style="padding-bottom: 40px">
+                    <div style="height: 100px">
+                        Hidden bits:
+                        <span id="bitsdisplay">1</span><div id="bits" style="margin-top: 10px; width: 300px"></div>
+                        <button class="btn btn-default" style="margin-top: 10px" id="downloadbutton">Download Full-size Image</button>
+                    </div>
+
+                    <canvas style="border: solid 1px black" width="300" height="300" id="outputcanvas"></canvas>
+                </div>
+            </div>
+
+
+            <div id="unhiderow" class="row">
+                <div class="col-md-4" style="padding-bottom: 40px">
+                    <div style="height: 100px">
+                        Image:<input type="file" id="stegimage"/><br>
+                        Example:
+                        <select id="stegimage-preset">
+                            <option value="na">N/A</option>
+                            <option value="wikipedia-tree">Wikipedia Tree</option>
+                            <option value="wikipedia-cat">Wikipedia Cat</option>
+                            <option value="jes">jes</option>
+                            <option value="walrus">Walrus</option>
+                            <option value="lena">Lena</option>
+                            <option value="rally-car">Rally car</option>
+                            <option value="motocross">Motocross</option>
+                            <option value="pink">Pink</option>
+                        </select>
+                    </div>
+                    <canvas style="border: solid 1px black" width="300" height="300" id="stegcanvas"></canvas>
+                </div>
+
+                <div class="col-md-4" style="padding-bottom: 40px">
+                    <div style="height: 100px">
+                        Hidden bits:
+                        <span id="unhidebitsdisplay">1</span><div id="bits2" style="margin-top: 10px; width: 300px"></div>
+                        <button class="btn btn-default" style="margin-top: 10px" id="downloadbutton2">Download Full-size Image</button>
+                    </div>
+
+                    <canvas style="border: solid 1px black" width="300" height="300" id="hiddencanvas"></canvas>
+
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <hr>
+                    <p>This is a project by <a href="http://incoherency.co.uk/">James Stanley</a>.</p>
+                    <p>You can learn more about Steganography <a href="https://en.wikipedia.org/wiki/Steganography">on Wikipedia</a>.</p>
+                </div>
+            </div>
+
+       
+
+            <div class="modal" id="fullimgmodal" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title" id="myModalLabel">Save image</h4>
+                        </div>
+                        <div class="modal-body">
+                            <span id="loadingspan"></span><br>
+                            <img style="max-width: 100%" id="viewimg">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+        <script type="text/javascript" src="https://code.jquery.com/jquery-2.2.3.min.js"></script>
+        <script type="text/javascript" src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+        <script type="text/javascript" src="hideimage.js"></script>
+    </body>
+</html>
